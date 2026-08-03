@@ -1,0 +1,22 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python / Jupyter
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Datasets and Large Data
+dataset*/
+*.zip
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
