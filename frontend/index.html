@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge — Live ISL Recognition</title>
+  <meta name="description" content="Real-time Indian Sign Language recognition powered by MediaPipe and Deep Learning" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ─── HEADER ─────────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🖐️</span>
+      <div class="logo-text">
+        <span class="logo-name">SignBridge</span>
+        <span class="logo-sub">ISL Recognition Dashboard</span>
+      </div>
+    </div>
+    <div class="status-pill" id="status-pill">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Connecting…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN GRID ──────────────────────────────────────────────────────────── -->
+<main class="main-grid">
+
+  <!-- Column 1 — Camera Feed -->
+  <section class="panel camera-panel">
+    <div class="panel-header">
+      <h2>📷 Live Camera</h2>
+      <button class="btn-secondary" id="toggle-camera">Stop Camera</button>
+    </div>
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay-canvas"></canvas>
+      <div class="camera-badge" id="fps-badge">— fps</div>
+    </div>
+    <div class="cam-controls">
+      <label class="toggle-label">
+        <input type="checkbox" id="show-skeleton" checked />
+        <span class="toggle-track"></span>
+        Show hand skeleton
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="mirror-mode" checked />
+        <span class="toggle-track"></span>
+        Mirror view
+      </label>
+    </div>
+  </section>
+
+  <!-- Column 2 — Prediction -->
+  <section class="panel prediction-panel">
+    <div class="panel-header">
+      <h2>🔤 Prediction</h2>
+      <span class="badge" id="detection-badge">Waiting…</span>
+    </div>
+
+    <!-- Big Letter Display -->
+    <div class="letter-display" id="letter-display">
+      <div class="letter-glow" id="letter-glow">–</div>
+      <div class="letter-label">Recognized Letter</div>
+    </div>
+
+    <!-- Confidence Ring -->
+    <div class="confidence-section">
+      <svg class="ring-svg" viewBox="0 0 120 120">
+        <circle class="ring-bg" cx="60" cy="60" r="50" />
+        <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"
+          stroke-dasharray="314 314" stroke-dashoffset="314" />
+        <text x="60" y="55" class="ring-pct" id="ring-pct">0%</text>
+        <text x="60" y="72" class="ring-label-text">Confidence</text>
+      </svg>
+    </div>
+
+    <!-- Top-5 Probability Bars -->
+    <div class="prob-bars" id="prob-bars">
+      <p class="prob-title">Top predictions</p>
+      <div id="bar-list"></div>
+    </div>
+  </section>
+
+  <!-- Column 3 — Word Builder + History -->
+  <section class="panel history-panel">
+    <div class="panel-header">
+      <h2>📝 Word Builder</h2>
+      <button class="btn-secondary" id="clear-history">Clear</button>
+    </div>
+
+    <!-- Current word -->
+    <div class="word-display">
+      <div class="word-label">Current word</div>
+      <div class="word-text" id="word-text">_</div>
+      <div class="word-actions">
+        <button class="btn-primary" id="add-space">+ Space</button>
+        <button class="btn-ghost" id="backspace-btn">⌫ Delete</button>
+      </div>
+    </div>
+
+    <!-- Sentence built -->
+    <div class="sentence-section">
+      <div class="word-label">Sentence</div>
+      <div class="sentence-text" id="sentence-text">Start signing…</div>
+    </div>
+
+    <!-- History scroll -->
+    <div class="history-scroll">
+      <div class="word-label">Detection log</div>
+      <ul class="history-list" id="history-list"></ul>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-label">Detections</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-avg">0%</div>
+        <div class="stat-label">Avg Conf.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-letters">0</div>
+        <div class="stat-label">Letters Typed</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ─── TOAST ──────────────────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

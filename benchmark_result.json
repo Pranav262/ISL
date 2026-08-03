@@ -1,0 +1,7 @@
+{
+  "landmark_accuracy": 28.53,
+  "mobilenet_accuracy": 87.28,
+  "landmark_latency_ms": 97.87,
+  "mobilenet_latency_ms": 67.0,
+  "recommended": "mobilenet"
+}

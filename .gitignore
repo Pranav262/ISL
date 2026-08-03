@@ -1,18 +1,22 @@
-# Virtual Environment
+# Python virtual environment
 .venv/
 venv/
 ENV/
 
-# Python / Jupyter
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Jupyter
 .ipynb_checkpoints/
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Datasets and Large Data
+# Datasets and large archives (too large for git)
 dataset*/
 *.zip
 *.tar.gz
