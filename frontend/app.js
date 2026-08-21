@@ -6,7 +6,7 @@
    - Animates letter prediction, confidence ring, top-5 bars, word builder
    ══════════════════════════════════════════════════════════════════════════ */
 
-const API = "http://localhost:5050";
+const API = window.location.origin.includes("http") ? window.location.origin : "http://localhost:5050";
 
 // ─── State ─────────────────────────────────────────────────────────────────
 let cameraRunning   = false;
@@ -19,6 +19,8 @@ let confSum         = 0;
 let lettersTyped    = 0;
 let currentWord     = "";
 let sentence        = "";
+let modelStatusText = "Model active";
+let islAvailable    = false;
 
 // FPS tracking
 let frameCount = 0;
@@ -73,8 +75,12 @@ async function checkHealth() {
   try {
     const res  = await fetch(`${API}/health`);
     const data = await res.json();
-    setStatus("ok", `Model ready — ${data.num_classes} classes`);
-    showToast(`✅ SignBridge loaded — ${data.num_classes} classes (${data.classes.join(", ")})`);
+    const ensN = data.ensemble?.num_classes ?? 23;
+    islAvailable = data.engines?.dynamic_bilstm ?? true;
+    modelStatusText = `Ensemble Engine (3 Models: MLP + BiLSTM + CNN) — ${ensN} ISL signs`;
+    setStatus("ok", modelStatusText);
+    showToast(`⚡ SignBridge Ensemble Engine Active — ${ensN} ISL Signs`);
+    updateIslBadge(islAvailable, 0, false);
     startCamera();
   } catch {
     setStatus("err", "Backend offline — run: python backend/app.py");
@@ -152,6 +158,7 @@ async function captureAndPredict() {
     });
     const data = await res.json();
     handlePrediction(data, vw, vh);
+    setStatus("ok", modelStatusText);
   } catch {
     setStatus("err", "Prediction failed — reconnecting…");
   }
@@ -172,16 +179,24 @@ async function captureAndPredict() {
 function handlePrediction(data, vw, vh) {
   if (!data.detected) {
     setLetter("–", 0, false);
+    updateRing(0);
+    updateBars([]);
     drawSkeleton([], vw, vh);
+    updateIslBadge(islAvailable, 0, false);
     return;
   }
 
-  const { letter, confidence, all_probs, landmarks } = data;
+  const { letter, confidence, all_probs, landmarks, isl } = data;
 
   setLetter(letter, confidence, true);
   updateRing(confidence);
   updateBars(all_probs || []);
   drawSkeleton(landmarks || [], vw, vh);
+
+  // ISL dynamic prediction badge
+  if (isl && isl.available) {
+    updateIslBadge(true, isl.buffer_frames, isl.buffer_ready, isl.letter, isl.confidence);
+  }
 
   // Word builder: commit letter after 2 stable frames of the same prediction
   if (letter === lastLetter && letter !== "?" && letter !== "–") {
@@ -363,6 +378,51 @@ clearBtn.addEventListener("click", () => {
   statTotal.textContent = statAvg.textContent = statLetters.textContent = "0";
   showToast("Cleared ✨");
 });
+
+// ─── ISL Dynamic Badge ────────────────────────────────────────────────────────
+function updateIslBadge(available, bufFrames, ready, letter, conf) {
+  let badge = document.getElementById("isl-badge");
+  if (!badge) {
+    // Inject ISL badge into the DOM once
+    badge = document.createElement("div");
+    badge.id = "isl-badge";
+    badge.style.cssText = [
+      "position:fixed", "bottom:24px", "left:50%", "transform:translateX(-50%)",
+      "background:rgba(16,18,30,0.92)", "border:1px solid rgba(99,179,237,0.3)",
+      "border-radius:14px", "padding:10px 20px", "display:flex",
+      "align-items:center", "gap:12px", "z-index:999",
+      "font-family:'Inter',sans-serif", "font-size:13px", "color:#e2e8f0",
+      "backdrop-filter:blur(10px)", "box-shadow:0 4px 24px rgba(0,0,0,0.4)",
+    ].join(";");
+    document.body.appendChild(badge);
+  }
+
+  if (!available) {
+    badge.style.display = "none";
+    return;
+  }
+  badge.style.display = "flex";
+
+  const TOTAL = 30;
+  const filled = Math.min(bufFrames, TOTAL);
+  const pct    = Math.round((filled / TOTAL) * 100);
+  const barColor = ready ? "#63b3ed" : "#4a5568";
+  const letterHtml = (ready && letter)
+    ? `<span style="font-size:22px;font-weight:700;color:#63b3ed;letter-spacing:1px">${letter}</span>
+       <span style="color:#90cdf4;font-size:11px">${conf?.toFixed(0)}%</span>`
+    : `<span style="color:#718096;font-size:12px">gathering…</span>`;
+
+  badge.innerHTML = `
+    <span style="color:#9f7aea;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px">ISL BiLSTM</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="width:80px;height:5px;background:#2d3748;border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.15s"></div>
+      </div>
+      <span style="color:#718096;font-size:11px">${filled}/${TOTAL}</span>
+    </div>
+    ${letterHtml}
+  `;
+}
 
 // ─── Boot ────────────────────────────────────────────────────────────────────
 checkHealth();
