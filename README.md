@@ -16,10 +16,13 @@ All trained model weights and class mappings are located under [`backend/model/`
 
 | Model File | Architecture | Size | Status in `app.py` | Benchmark Accuracy | Avg Latency |
 |---|---|---|---|---|---|
-| **`best_model.keras`** | **MobileNetV2 Transfer Learning CNN** | **23.8 MB** | **✅ CURRENTLY ACTIVE** | **87.3%** | **67.0 ms** |
+| **`best_model.keras`** | **MobileNetV2 Transfer Learning CNN** | **31.5 MB** | **✅ CURRENTLY ACTIVE** | **87.3%** | **67.0 ms** |
+| `isl_sequence_model.keras` | Bi-LSTM Sequence Model | 4.3 MB | 📦 Active (Dynamic Signs) | — | — |
 | `signbridge_mobilenetv2.keras` | MobileNetV2 CNN (Final Checkpoint) | 23.8 MB | 📦 Backup | 87.3% | 67.0 ms |
-| `signbridge_landmark_model.keras` | MediaPipe 21 Landmark MLP | 859 KB | 📦 Backup | 28.5% | 97.9 ms |
+| `signbridge_landmark_model.keras` | MediaPipe 21 Landmark MLP | 1.1 MB | 📦 Backup | 28.5% | 97.9 ms |
+| `isl_feat_mean.npy` / `isl_feat_std.npy` | Mean & Std normalization arrays | < 1 KB | ✅ Active for sequence features | — | — |
 | `label_classes.npy` | Class Label Encoder (`a`–`z`, `{`) | < 1 KB | ✅ Active Mapping | — | — |
+| `isl_label_classes.npy` | Dynamic Class Label Encoder | < 1 KB | ✅ Active Mapping | — | — |
 
 ### 🎯 Why MobileNetV2 is Used in Production (`app.py`)
 
@@ -114,21 +117,45 @@ SignBridge/
 ├── benchmark_models.py               # Empirical evaluation & benchmarking script
 │
 ├── backend/
-│   ├── app.py                        # Flask REST API server (MobileNetV2 + MediaPipe)
+│   ├── app.py                        # Flask REST API server
 │   └── model/
-│       ├── best_model.keras                 # ✅ Active MobileNetV2 CNN (23.8 MB)
+│       ├── best_model.keras                 # ✅ Active MobileNetV2 CNN (31.5 MB)
+│       ├── isl_sequence_model.keras         # 📦 LSTM Sequence Model for dynamic signs (4.3 MB)
 │       ├── signbridge_mobilenetv2.keras     # 📦 MobileNetV2 Final Checkpoint (23.8 MB)
-│       ├── signbridge_landmark_model.keras  # 📦 MediaPipe Landmark DNN Backup (859 KB)
-│       └── label_classes.npy               # Saved class label array
+│       ├── signbridge_landmark_model.keras  # 📦 MediaPipe Landmark DNN Backup (1.1 MB)
+│       ├── label_classes.npy                # Saved static class label array
+│       ├── isl_label_classes.npy            # Saved dynamic class label array
+│       ├── isl_feat_mean.npy                # Feature mean for LSTM normalization
+│       └── isl_feat_std.npy                 # Feature std for LSTM normalization
 │
 ├── frontend/
 │   ├── index.html                    # Dashboard UI layout
 │   ├── style.css                     # Premium dark glassmorphism styling
-│   └── app.js                        # Webcam capture, API polling, canvas overlay
+│   ├── app.js                        # Webcam capture, API polling, canvas overlay
+│   ├── import cv2                    # Camera connection test script
+│   └── import cv2.py                 # MediaPipe data collector script
+│
+├── scripts/                          # Model training & optimization scripts
+│   ├── optimize_ensemble_weights.py
+│   ├── retrain_isl_az.py
+│   ├── scratch_plot.py
+│   ├── train_sequence_model.py
+│   ├── train_static_landmark_model.py
+│   └── train_transformer_model.py
+│
+├── training_artifacts/               # Exported weights & performance confusion matrices
+│   ├── best_isl_sequence_model.keras
+│   ├── best_landmark_model.keras
+│   ├── best_mobilenetv2.keras
+│   ├── best_transformer_model.keras
+│   ├── cnn_confusion_matrix.png
+│   ├── landmark_confusion_matrix.png
+│   └── transformer_confusion_matrix.png
 │
 └── notebooks/
     ├── SuperBridge.ipynb             # MobileNetV2 model training notebook
-    └── SuperBridge_Landmark.ipynb    # MediaPipe landmark extraction & DNN notebook
+    ├── SuperBridge_Landmark.ipynb    # MediaPipe landmark extraction & DNN notebook
+    └── dataset                       # Dataset metadata/reference file
 ```
 
 ---
